@@ -17,6 +17,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        AdSDK.initialize(this)
 //        AdSettings.manualDisableAd = true
 //        AdSettings.showSkipButton = false
         findViewById<Button>(R.id.btnClick2).setOnClickListener {

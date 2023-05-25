@@ -2,18 +2,14 @@ package systems.hammer.adsdk.data
 
 import android.content.Context
 import android.util.Log
-import com.google.gson.FieldNamingPolicy
-import com.google.gson.GsonBuilder
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import systems.hammer.adsdk.AdSettings
-import systems.hammer.adsdk.model.*
-import java.util.concurrent.TimeUnit
+import systems.hammer.adsdk.model.AdFetchResult
+import systems.hammer.adsdk.model.AdType
+import systems.hammer.adsdk.model.GameModel
 
 internal class NetworkAgent private constructor(context: Context) : NetworkAPI {
     companion object {
@@ -31,13 +27,13 @@ internal class NetworkAgent private constructor(context: Context) : NetworkAPI {
         }
     }
 
-    private val adAPI: AdAPI
     private val appPackageName: String
     private var currentGame: GameModel? = null
+    private var bannerAd : AdFetchResult? = null
+    private var fullScreenAd : AdFetchResult? = null
 
 
     init {
-        adAPI = provideRetrofit(provideOKHTTP()).create(AdAPI::class.java)
         appPackageName = context.packageName ?: throw Exception("Null package name")
         findCurrentGame()
     }
@@ -45,13 +41,13 @@ internal class NetworkAgent private constructor(context: Context) : NetworkAPI {
     private var findGameJob: Job? = null
 
     private fun findCurrentGame() {
-        findGameJob = GlobalScope.launch {
+        findGameJob = GlobalScope.launch(Dispatchers.IO) {
             try {
-                val allGames = adAPI.getGames()
+                val allGames = AdApi.getGames()      // adAPI.getGames()
                 currentGame = allGames.find { game ->
                     appPackageName.contains(game.slug)
                 }
-//                currentGame = allGames[0]
+                currentGame = allGames[0]
                 if (currentGame == null) {
                     AdSettings.showAd = false
                     Log.e(this.javaClass.simpleName, "Can't find current game")
@@ -63,48 +59,40 @@ internal class NetworkAgent private constructor(context: Context) : NetworkAPI {
         }
     }
 
+    private var preloadJob: Job? = null
 
-    private fun provideOKHTTP(): OkHttpClient {
-        val loggingInterceptor =
-            HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
-        return OkHttpClient.Builder()
-            .connectTimeout(AdSettings.connectTimeOut, TimeUnit.SECONDS)
-            .readTimeout(AdSettings.readTimeout, TimeUnit.SECONDS)
-//            .addInterceptor(loggingInterceptor)
-            .build()
+    fun preload(){
+        preloadJob = GlobalScope.launch(Dispatchers.IO) {
+            bannerAd = loadAd(AdType.banner)
+            fullScreenAd = loadAd(AdType.fullscreen_img)
+        }
     }
 
-    private fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
-        return Retrofit.Builder()
-            .client(okHttpClient)
-            .baseUrl(AdSettings.base_URL)
-            .addConverterFactory(
-                GsonConverterFactory.create(
-                    GsonBuilder()
-                        .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-                        .create()
-                )
-            )
-            .build()
+    private suspend fun loadAd(type : AdType): AdFetchResult{
+        findGameJob?.join()
+        return try {
+            AdApi.getAdvertisement(type, currentGame!!.uuid)
+        }catch (e: Exception) {
+            Log.e(this.javaClass.simpleName, "Can't get ad.\n ${e.message}")
+//            e.printStackTrace()
+            AdFetchResult.Error(e)
+        }
     }
 
     override suspend fun getAd(type: AdType): AdFetchResult {
-        findGameJob?.join()
-        return try {
-            AdFetchResult.Success(adAPI.getAdvertisement(type.toString(), currentGame!!.uuid))
-        }catch (e: Exception) {
-            Log.e(this.javaClass.simpleName, "Can't get ad.")
-//            e.printStackTrace()
-            AdFetchResult.Error(e)
+        preloadJob?.join()
+        return when(type) {
+            AdType.banner -> bannerAd ?: AdFetchResult.Error(Exception("Fetched ad is null"))
+            AdType.fullscreen_img -> fullScreenAd ?: AdFetchResult.Error(Exception("Fetched ad is null"))
         }
     }
 
     override suspend fun clickAd(id: String) {
         findGameJob?.join()
         try {
-            adAPI.actionWithAdvertisement(id, currentGame!!.uuid, AdAction.click)
+            AdApi.clickAd(id, currentGame!!.uuid)
         } catch (e: Exception) {
-            Log.e(this.javaClass.simpleName, "Can't send click event.}")
+            Log.e(this.javaClass.simpleName, "Can't send click event.\n ${e.message}}")
 //            e.printStackTrace()
         }
     }
@@ -112,9 +100,9 @@ internal class NetworkAgent private constructor(context: Context) : NetworkAPI {
     override suspend fun viewAd(id: String) {
         findGameJob?.join()
         try {
-            adAPI.actionWithAdvertisement(id, currentGame!!.uuid, AdAction.view)
+            AdApi.viewAd(id, currentGame!!.uuid)
         } catch (e: Exception) {
-            Log.e(this.javaClass.simpleName, "Can't send view event.")
+            Log.e(this.javaClass.simpleName, "Can't send view event.\n ${e.message}}")
 //            e.printStackTrace()
         }
     }

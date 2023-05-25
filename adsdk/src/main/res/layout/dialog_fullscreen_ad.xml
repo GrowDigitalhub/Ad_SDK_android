@@ -45,7 +45,8 @@
         android:id="@+id/ivAd"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:src="@drawable/adsdk_ic_launcher_background"
+        android:background="@android:color/transparent"
+        tools:src="@drawable/sample_full"
         android:scaleType="fitXY"/>
 
     <androidx.appcompat.widget.AppCompatButton

@@ -12,9 +12,10 @@
         android:id="@+id/ivBanner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
         android:maxHeight="200dp"
         android:adjustViewBounds="true"
-        tools:src="@mipmap/ic_launcher"
+        tools:src="@drawable/sample_banner"
         android:scaleType="fitXY"/>
 
     <ImageButton

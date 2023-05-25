@@ -1,6 +1,6 @@
 package systems.hammer.adsdk.model
 
-internal data class GameModel(
+data class GameModel(
     val advertising: Boolean,
     val id: Int,
     val name: String,

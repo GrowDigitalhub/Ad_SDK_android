@@ -39,8 +39,9 @@ class BannerAdView @JvmOverloads constructor(
 
     private fun initCloseButton() {
         btnClose = findViewById(R.id.ibClose)
+        btnClose?.isVisible = AdSettings.showSkipButton
         btnClose?.setOnClickListener {
-            visibility = View.GONE
+            onSkip()
         }
     }
 
@@ -83,6 +84,12 @@ class BannerAdView @JvmOverloads constructor(
                 }
             }
         }
+    }
+
+    private var onSkip = {}
+
+    private fun setOnSkip(onSkip : () -> Unit){
+        this.onSkip = onSkip
     }
 
     private fun followLink(url: String){

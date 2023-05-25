@@ -20,6 +20,6 @@ object AdSettings {
         return field
     }
 
-    var connectTimeOut: Long = 30L
-    var readTimeout: Long = 30L
+    var connectTimeOut = 30000
+    var readTimeout = 30000
 }
