@@ -2,6 +2,7 @@ package systems.hammer.adsdk.data
 
 import android.content.Context
 import android.util.Log
+import com.squareup.picasso.Picasso
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -64,7 +65,11 @@ internal class NetworkAgent private constructor(context: Context) : NetworkAPI {
     fun preload(){
         preloadJob = GlobalScope.launch(Dispatchers.IO) {
             bannerAd = loadAd(AdType.banner)
+            if (bannerAd is AdFetchResult.Success)
+                Picasso.get().load((bannerAd as AdFetchResult.Success).ad.link_url).fetch()
             fullScreenAd = loadAd(AdType.fullscreen_img)
+            if (fullScreenAd is AdFetchResult.Success)
+                Picasso.get().load((fullScreenAd as AdFetchResult.Success).ad.link_url).fetch()
         }
     }
 
