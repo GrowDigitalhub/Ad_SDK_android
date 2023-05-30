@@ -5,7 +5,7 @@ data class GameModel(
     val id: Int,
     val name: String,
     val slug: String,
-    val uuid: String,
+    var uuid: String,
     val version: Double
 ) {
     companion object {

@@ -8,4 +8,9 @@ object AdSDK {
     fun initialize(context : Context){
         NetworkAgent.getInstance(context).preload()
     }
+
+    fun initialize(context : Context, uuid: String){
+        NetworkAgent.getInstance(context).setGameUUID(uuid)
+        NetworkAgent.getInstance(context).preload()
+    }
 }

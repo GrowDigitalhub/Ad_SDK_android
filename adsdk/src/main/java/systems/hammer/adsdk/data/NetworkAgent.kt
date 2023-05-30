@@ -32,7 +32,7 @@ internal class NetworkAgent private constructor(context: Context) : NetworkAPI {
     private var currentGame: GameModel? = null
     private var bannerAd : AdFetchResult? = null
     private var fullScreenAd : AdFetchResult? = null
-
+    private var gameUUID : String? = null
 
     init {
         appPackageName = context.packageName ?: throw Exception("Null package name")
@@ -48,7 +48,6 @@ internal class NetworkAgent private constructor(context: Context) : NetworkAPI {
                 currentGame = allGames.find { game ->
                     appPackageName.contains(game.slug)
                 }
-                currentGame = allGames[0]
                 if (currentGame == null) {
                     AdSettings.showAd = false
                     Log.e(this.javaClass.simpleName, "Can't find current game")
@@ -73,10 +72,14 @@ internal class NetworkAgent private constructor(context: Context) : NetworkAPI {
         }
     }
 
+    fun setGameUUID(uuid : String){
+        gameUUID = uuid
+    }
+
     private suspend fun loadAd(type : AdType): AdFetchResult{
         findGameJob?.join()
         return try {
-            AdApi.getAdvertisement(type, currentGame!!.uuid)
+            AdApi.getAdvertisement(type,gameUUID ?: currentGame!!.uuid)
         }catch (e: Exception) {
             Log.e(this.javaClass.simpleName, "Can't get ad.\n ${e.message}")
 //            e.printStackTrace()
@@ -95,7 +98,7 @@ internal class NetworkAgent private constructor(context: Context) : NetworkAPI {
     override suspend fun clickAd(id: String) {
         findGameJob?.join()
         try {
-            AdApi.clickAd(id, currentGame!!.uuid)
+            AdApi.clickAd(id, gameUUID ?: currentGame!!.uuid)
         } catch (e: Exception) {
             Log.e(this.javaClass.simpleName, "Can't send click event.\n ${e.message}}")
 //            e.printStackTrace()
@@ -105,7 +108,7 @@ internal class NetworkAgent private constructor(context: Context) : NetworkAPI {
     override suspend fun viewAd(id: String) {
         findGameJob?.join()
         try {
-            AdApi.viewAd(id, currentGame!!.uuid)
+            AdApi.viewAd(id, gameUUID ?: currentGame!!.uuid)
         } catch (e: Exception) {
             Log.e(this.javaClass.simpleName, "Can't send view event.\n ${e.message}}")
 //            e.printStackTrace()
