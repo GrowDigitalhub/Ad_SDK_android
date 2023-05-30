@@ -86,12 +86,9 @@ class BannerAdView @JvmOverloads constructor(
         }
     }
 
-    private var onSkip = {}
+    var onSkip = {}
 
-    private fun setOnSkip(onSkip : () -> Unit){
-        this.onSkip = onSkip
-    }
-
+  
     private fun followLink(url: String){
         context.startActivity(
             Intent(
