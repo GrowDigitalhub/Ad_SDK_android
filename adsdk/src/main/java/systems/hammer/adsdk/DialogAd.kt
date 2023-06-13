@@ -75,7 +75,7 @@ class DialogAd(context: Context, var onSkip: () -> Unit = {}) : DialogFragment()
 
     private fun setUI(){
         btnClose?.setOnClickListener {
-            dismiss()
+            close()
         }
         btnSkip?.setOnClickListener {
             onSkip()
@@ -102,6 +102,7 @@ class DialogAd(context: Context, var onSkip: () -> Unit = {}) : DialogFragment()
     override fun show(manager: FragmentManager, tag: String?) {
         if (AdSettings.showAd)
             super.show(manager, tag)
+        else close()
     }
 
     private fun loadAd() {
@@ -121,13 +122,13 @@ class DialogAd(context: Context, var onSkip: () -> Unit = {}) : DialogFragment()
                                     Uri.parse(currentAd!!.link_url)
                                 )
                             )
-                            dismiss()
+                            close()
                         }
                     }
                     networkAgent.viewAd(currentAd!!.id.toString())
                 }
                 is AdFetchResult.Error -> {
-                    dismiss()
+                    close()
                 }
             }
         }
@@ -143,10 +144,9 @@ class DialogAd(context: Context, var onSkip: () -> Unit = {}) : DialogFragment()
         Picasso.get().load(url).placeholder(R.drawable.adsdk_placeholder).into(imageView)
     }
 
-
-    override fun onDismiss(dialog: DialogInterface) {
-        super.onDismiss(dialog)
+    private fun close(){
         onClose()
+        dismiss()
     }
 
     private var onClose = {}
