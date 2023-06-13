@@ -7,6 +7,8 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.*
 import android.widget.FrameLayout
 import android.widget.ImageButton
@@ -145,8 +147,10 @@ class DialogAd(context: Context, var onSkip: () -> Unit = {}) : DialogFragment()
     }
 
     private fun close(){
-        onClose()
-        dismiss()
+        Handler(Looper.getMainLooper()).post {
+            onClose()
+            dismiss()
+        }
     }
 
     private var onClose = {}
