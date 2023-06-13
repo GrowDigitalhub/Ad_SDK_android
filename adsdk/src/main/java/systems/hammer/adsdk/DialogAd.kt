@@ -1,15 +1,12 @@
 package systems.hammer.adsdk
 
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
-import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.util.Log
 import android.view.*
 import android.widget.FrameLayout
 import android.widget.ImageButton
@@ -26,8 +23,6 @@ import systems.hammer.adsdk.data.NetworkAgent
 import systems.hammer.adsdk.model.AdFetchResult
 import systems.hammer.adsdk.model.AdModel
 import systems.hammer.adsdk.model.AdType
-import java.net.HttpURLConnection
-import java.net.URL
 import kotlin.properties.Delegates
 
 
@@ -80,7 +75,7 @@ class DialogAd(context: Context, var onSkip: () -> Unit = {}) : DialogFragment()
 
     private fun setUI(){
         btnClose?.setOnClickListener {
-            close()
+            dismiss()
         }
         btnSkip?.setOnClickListener {
             onSkip()
@@ -126,14 +121,13 @@ class DialogAd(context: Context, var onSkip: () -> Unit = {}) : DialogFragment()
                                     Uri.parse(currentAd!!.link_url)
                                 )
                             )
-                            close()
+                            dismiss()
                         }
                     }
                     networkAgent.viewAd(currentAd!!.id.toString())
                 }
                 is AdFetchResult.Error -> {
                     dismiss()
-
                 }
             }
         }
@@ -149,8 +143,9 @@ class DialogAd(context: Context, var onSkip: () -> Unit = {}) : DialogFragment()
         Picasso.get().load(url).placeholder(R.drawable.adsdk_placeholder).into(imageView)
     }
 
-    private fun close() {
-        dismiss()
+
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
         onClose()
     }
 

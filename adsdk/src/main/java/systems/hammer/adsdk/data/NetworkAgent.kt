@@ -30,13 +30,12 @@ internal class NetworkAgent private constructor(context: Context) : NetworkAPI {
 
     private val appPackageName: String
     private var currentGame: GameModel? = null
-    private var bannerAd : AdFetchResult? = null
-    private var fullScreenAd : AdFetchResult? = null
-    private var gameUUID : String? = null
+    private var bannerAd: AdFetchResult? = null
+    private var fullScreenAd: AdFetchResult? = null
+    private var gameUUID: String? = null
 
     init {
         appPackageName = context.packageName ?: throw Exception("Null package name")
-        findCurrentGame()
     }
 
     private var findGameJob: Job? = null
@@ -44,7 +43,9 @@ internal class NetworkAgent private constructor(context: Context) : NetworkAPI {
     private fun findCurrentGame() {
         findGameJob = GlobalScope.launch(Dispatchers.IO) {
             try {
-                val allGames = AdApi.getGames()      // adAPI.getGames()
+                if (gameUUID != null)
+                    return@launch
+                val allGames = AdApi.getGames()
                 currentGame = allGames.find { game ->
                     appPackageName.contains(game.slug)
                 }
@@ -53,16 +54,18 @@ internal class NetworkAgent private constructor(context: Context) : NetworkAPI {
                     Log.e(this.javaClass.simpleName, "Can't find current game")
                 } else
                     AdSettings.showAd = currentGame!!.advertising
-            } catch (e : Exception){
-                Log.e(this.javaClass.simpleName,"Can't find available games. \n ${e.message}")
+            } catch (e: Exception) {
+                Log.e(this.javaClass.simpleName, "Can't find available games. \n ${e.message}")
             }
         }
     }
 
     private var preloadJob: Job? = null
 
-    fun preload(){
+    fun preload() {
         preloadJob = GlobalScope.launch(Dispatchers.IO) {
+            findCurrentGame()
+            findGameJob?.join()
             bannerAd = loadAd(AdType.banner)
             if (bannerAd is AdFetchResult.Success)
                 Picasso.get().load((bannerAd as AdFetchResult.Success).ad.link_url).fetch()
@@ -72,26 +75,28 @@ internal class NetworkAgent private constructor(context: Context) : NetworkAPI {
         }
     }
 
-    fun setGameUUID(uuid : String){
+    fun setGameUUID(uuid: String) {
+        AdSettings.showAd = true
         gameUUID = uuid
     }
 
-    private suspend fun loadAd(type : AdType): AdFetchResult{
+    private suspend fun loadAd(type: AdType): AdFetchResult {
         findGameJob?.join()
         return try {
-            AdApi.getAdvertisement(type,gameUUID ?: currentGame!!.uuid)
-        }catch (e: Exception) {
+            AdApi.getAdvertisement(type, gameUUID ?: currentGame!!.uuid)
+        } catch (e: Exception) {
             Log.e(this.javaClass.simpleName, "Can't get ad.\n ${e.message}")
-//            e.printStackTrace()
+            e.printStackTrace()
             AdFetchResult.Error(e)
         }
     }
 
     override suspend fun getAd(type: AdType): AdFetchResult {
         preloadJob?.join()
-        return when(type) {
+        return when (type) {
             AdType.banner -> bannerAd ?: AdFetchResult.Error(Exception("Fetched ad is null"))
-            AdType.fullscreen_img -> fullScreenAd ?: AdFetchResult.Error(Exception("Fetched ad is null"))
+            AdType.fullscreen_img -> fullScreenAd
+                ?: AdFetchResult.Error(Exception("Fetched ad is null"))
         }
     }
 

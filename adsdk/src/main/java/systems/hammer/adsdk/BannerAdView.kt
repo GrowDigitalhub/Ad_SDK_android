@@ -34,7 +34,7 @@ class BannerAdView @JvmOverloads constructor(
         LayoutInflater.from(context).inflate(R.layout.view_banner_ad, this, true)
 
         initCloseButton()
-        initBanner()
+//        initBanner()
     }
 
     private fun initCloseButton() {
