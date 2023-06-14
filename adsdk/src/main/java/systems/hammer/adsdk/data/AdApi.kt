@@ -11,9 +11,12 @@ import systems.hammer.adsdk.model.*
     private val adRequest = "api/advertisement/"
     private val gameRequest = "api/games/"
 
-    fun getAdvertisement(type: AdType, games: String): AdFetchResult {
-        val request = AdSettings.base_URL + adRequest + "?type=$type&games=$games"
+    fun getAdvertisement(type: AdType, games: String, language : String?): AdFetchResult {
+        var request = AdSettings.base_URL + adRequest + "?type=$type&games=$games"
+        if (language != null)
+            request += "&language=$language"
         val result = RequestHandler.requestGET(request)
+        Log.d(this.javaClass.simpleName,"Ad request = $request")
         Log.d(this.javaClass.simpleName,"Ad result = $result")
         return if (result == null) {
             AdFetchResult.Error(Exception("AdClient. Can't fetch ad"))

@@ -33,6 +33,7 @@ internal class NetworkAgent private constructor(context: Context) : NetworkAPI {
     private var bannerAd: AdFetchResult? = null
     private var fullScreenAd: AdFetchResult? = null
     private var gameUUID: String? = null
+    private var language : String? = null
 
     init {
         appPackageName = context.packageName ?: throw Exception("Null package name")
@@ -80,10 +81,14 @@ internal class NetworkAgent private constructor(context: Context) : NetworkAPI {
         gameUUID = uuid
     }
 
+    fun setLanguage(language : String?){
+        this.language = language
+    }
+
     private suspend fun loadAd(type: AdType): AdFetchResult {
         findGameJob?.join()
         return try {
-            AdApi.getAdvertisement(type, gameUUID ?: currentGame!!.uuid)
+            AdApi.getAdvertisement(type, gameUUID ?: currentGame!!.uuid,language)
         } catch (e: Exception) {
             Log.e(this.javaClass.simpleName, "Can't get ad.\n ${e.message}")
             e.printStackTrace()
